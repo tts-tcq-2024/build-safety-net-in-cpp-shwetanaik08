@@ -43,3 +43,8 @@ TEST(SoundexTest, HandlesNonAlphabetCharacters) {
     EXPECT_EQ(generateSoundex("O'Leary"), "O460");
     EXPECT_EQ(generateSoundex("D'Souza"), "D200");
 }
+// Run the tests
+int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
