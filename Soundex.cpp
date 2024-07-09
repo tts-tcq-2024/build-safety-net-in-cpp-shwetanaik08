@@ -1,10 +1,8 @@
-#include "Soundex.h"
 #include <unordered_map>
 #include <cctype>
-#include <numeric>
-#include <algorithm>
+#include <string>
+#include <numeric> // Include numeric header for std::accumulate
 
-// Function to get Soundex code for a character
 char getSoundexCode(char c) {
     static const std::unordered_map<char, char> soundexMap {
         {'B', '1'}, {'F', '1'}, {'P', '1'}, {'V', '1'},
@@ -17,26 +15,37 @@ char getSoundexCode(char c) {
     };
     c = std::toupper(c);
     auto it = soundexMap.find(c);
-    return (it != soundexMap.end()) ? it->second : '0';
+    if (it != soundexMap.end()) {
+        return it->second;
+    }
+    return '0'; // Default case
+}
+
+// Function to determine if a character is 'H' or 'W'
+bool isHW(char c) {
+    return c == 'h' || c == 'w';
+}
+
+// Function to determine if a character should be appended based on Soundex rules
+bool shouldAppend(char code, char prevCode, char currentChar) {
+    return (code != '0' && code != prevCode) || isHW(currentChar);
 }
 
 // Function to accumulate Soundex codes from name
 std::string accumulateSoundexCodes(const std::string& name) {
     if (name.empty()) return "0000"; // Return "0000" for empty strings
-    std::string soundex(1, std::toupper(name[0]));
+    std::string soundex(1, toupper(name[0]));
     char prevCode = getSoundexCode(name[0]);
-
-    std::accumulate(name.begin() + 1, name.end(), std::ref(soundex),
+    
+    return std::accumulate(name.begin() + 1, name.end(), std::move(soundex),
         [&prevCode](std::string& acc, char c) {
             char code = getSoundexCode(c);
-            if (code != '0' && code != prevCode) {
+            if (shouldAppend(code, prevCode, c)) {
                 acc += code;
                 prevCode = code;
             }
             return acc;
         });
-
-    return soundex;
 }
 
 // Function to pad the Soundex code to 4 characters
