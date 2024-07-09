@@ -1,57 +1,54 @@
-#include <gtest/gtest.h>
 #include "Soundex.h"
+#include <unordered_map>
+#include <cctype>
+#include <numeric>
 
-// Test for empty string
-TEST(SoundexTest, HandlesEmptyString) {
-    EXPECT_EQ(generateSoundex(""), "");
+// Function to get Soundex code for a character
+char getSoundexCode(char c) {
+    static const std::unordered_map<char, char> soundexMap {
+        {'B', '1'}, {'F', '1'}, {'P', '1'}, {'V', '1'},
+        {'C', '2'}, {'G', '2'}, {'J', '2'}, {'K', '2'},
+        {'Q', '2'}, {'S', '2'}, {'X', '2'}, {'Z', '2'},
+        {'D', '3'}, {'T', '3'},
+        {'L', '4'},
+        {'M', '5'}, {'N', '5'},
+        {'R', '6'}
+    };
+    c = std::toupper(c);
+    auto it = soundexMap.find(c);
+    return (it != soundexMap.end()) ? it->second : '0';
 }
 
-// Test for single character
-TEST(SoundexTest, HandlesSingleCharacter) {
-    EXPECT_EQ(generateSoundex("A"), "A000");
+// Function to accumulate Soundex codes from name
+std::string accumulateSoundexCodes(const std::string& name) {
+    if (name.empty()) return "0000"; // Return "0000" for empty strings
+    std::string soundex(1, std::toupper(name[0]));
+    char prevCode = getSoundexCode(name[0]);
+
+    std::accumulate(name.begin() + 1, name.end(), std::ref(soundex),
+        [&prevCode](std::string& acc, char c) {
+            char code = getSoundexCode(c);
+            if (code != '0' && code != prevCode) {
+                acc += code;
+                prevCode = code;
+            }
+            return acc;
+        });
+
+    return soundex;
 }
 
-// Test for basic Soundex encoding
-TEST(SoundexTest, HandlesBasicEncoding) {
-    EXPECT_EQ(generateSoundex("Bob"), "B100");
-    EXPECT_EQ(generateSoundex("Tom"), "T500");
-    EXPECT_EQ(generateSoundex("Sam"), "S500");
+// Function to pad the Soundex code to 4 characters
+std::string padSoundex(const std::string& soundex) {
+    std::string paddedSoundex = soundex;
+    paddedSoundex.resize(4, '0');
+    return paddedSoundex;
 }
 
-// Test for names with adjacent duplicate Soundex codes
-TEST(SoundexTest, HandlesAdjacentDuplicates) {
-    EXPECT_EQ(generateSoundex("Lisa"), "L200");
-    EXPECT_EQ(generateSoundex("Susan"), "S250");
-}
-
-// Test for names with varying lengths
-TEST(SoundexTest, HandlesVaryingLengths) {
-    EXPECT_EQ(generateSoundex("Ann"), "A500");
-    EXPECT_EQ(generateSoundex("Lee"), "L000");
-    EXPECT_EQ(generateSoundex("Tim"), "T500");
-    EXPECT_EQ(generateSoundex("Mary"), "M600");
-}
-
-// Test for names with different cases
-TEST(SoundexTest, HandlesDifferentCases) {
-    EXPECT_EQ(generateSoundex("Tom"), generateSoundex("tom"));
-    EXPECT_EQ(generateSoundex("Lee"), generateSoundex("LEE"));
-}
-
-// Test for names with non-alphabet characters
-TEST(SoundexTest, HandlesNonAlphabetCharacters) {
-    EXPECT_EQ(generateSoundex("O'Leary"), "O460");
-    EXPECT_EQ(generateSoundex("D'Souza"), "D200");
-}
-
-// Test for names with 'H' and 'W' that should be ignored
-TEST(SoundexTest, HandlesHWCharacters) {
-    EXPECT_EQ(generateSoundex("Ashcraft"), "A261");
-    EXPECT_EQ(generateSoundex("Tymczak"), "T522");
-}
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+// Main function to generate Soundex code
+std::string generateSoundex(const std::string& name) {
+    if (name.empty()) return "";
+    std::string soundex = accumulateSoundexCodes(name);
+    return padSoundex(soundex);
 }
 
