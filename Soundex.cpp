@@ -1,7 +1,7 @@
 #include <unordered_map>
 #include <cctype>
 #include <string>
-#include <numeric> // Include numeric header for std::accumulate
+#include <numeric> // 
 
 char getSoundexCode(char c) {
     static const std::unordered_map<char, char> soundexMap {
