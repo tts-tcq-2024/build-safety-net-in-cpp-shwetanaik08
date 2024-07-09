@@ -4,7 +4,6 @@
 #include <string>
 
 char getSoundexCode(char c);
-bool isHW(char c);
 std::string accumulateSoundexCodes(const std::string& name);
 std::string padSoundex(const std::string& soundex);
 std::string generateSoundex(const std::string& name);
