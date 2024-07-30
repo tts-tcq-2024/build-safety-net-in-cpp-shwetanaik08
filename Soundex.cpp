@@ -1,55 +1,74 @@
-#include "Soundex.h"
+#include <iostream>
+#include <string>
 #include <unordered_map>
-#include <cctype>
-#include <numeric>
 
-// Function to get Soundex code for a character
-char getSoundexCode(char c) {
-    static const std::unordered_map<char, char> soundexMap {
+char retainFirstLetter(const std::string &name) {
+    return toupper(name[0]);
+}
+
+std::string getSoundexCode(const std::string &name) {
+    // Define the Soundex digit mapping
+    const std::unordered_map<char, char> soundex_mapping = {
         {'B', '1'}, {'F', '1'}, {'P', '1'}, {'V', '1'},
-        {'C', '2'}, {'G', '2'}, {'J', '2'}, {'K', '2'},
-        {'Q', '2'}, {'S', '2'}, {'X', '2'}, {'Z', '2'},
+        {'C', '2'}, {'G', '2'}, {'J', '2'}, {'K', '2'}, {'Q', '2'}, {'S', '2'}, {'X', '2'}, {'Z', '2'},
         {'D', '3'}, {'T', '3'},
         {'L', '4'},
         {'M', '5'}, {'N', '5'},
         {'R', '6'}
     };
-    c = std::toupper(c);
-    auto it = soundexMap.find(c);
-    return (it != soundexMap.end()) ? it->second : '0';
+
+    std::string encoded_name = "";
+    for (size_t i = 1; i < name.length(); ++i) {
+        char upper_char = toupper(name[i]);
+        if (soundex_mapping.find(upper_char) != soundex_mapping.end()) {
+            encoded_name += soundex_mapping.at(upper_char);
+        }
+    }
+    return encoded_name;
 }
 
-// Function to accumulate Soundex codes from name
-std::string accumulateSoundexCodes(const std::string& name) {
-    if (name.empty()) return "0000"; // Return "0000" for empty strings
-    std::string soundex(1, std::toupper(name[0]));
-    char prevCode = getSoundexCode(name[0]);
-
-    std::accumulate(name.begin() + 1, name.end(), std::ref(soundex),
-        [&prevCode](std::string& acc, char c) {
-            char code = getSoundexCode(c);
-            if (code != '0' && code != prevCode) {
-                acc += code;
-                prevCode = code;
-            }
-            return acc;
-        });
-
-    return soundex;
+std::string removeConsecutiveDuplicates(const std::string &encoded_name) {
+    std::string result;
+    result += encoded_name[0];
+    for (size_t i = 1; i < encoded_name.length(); ++i) {
+        if (encoded_name[i] != encoded_name[i - 1]) {
+            result += encoded_name[i];
+        }
+    }
+    return result;
 }
 
-// Function to pad the Soundex code to 4 characters
-std::string padSoundex(const std::string& soundex) {
-    std::string paddedSoundex = soundex;
-    paddedSoundex.resize(4, '0');
-    return paddedSoundex;
+std::string appendStr(const char first_letter, const std::string encoded_name){
+    std::string result(1, first_letter);
+    if(encoded_name.empty() || encoded_name == "") {
+        return result;
+    }
+    return result += encoded_name;
 }
 
-// Main function to generate Soundex code
-std::string generateSoundex(const std::string& name) {
+std::string finalizeSoundex(const char first_letter, const std::string encoded_name) {
+    std::string result = appendStr(first_letter, encoded_name);
+    while (result.length() < 4) {
+        result += '0';
+    }
+    //result.resize(4, '0');
+    return result;
+}
+
+std::string getSoundex(const std::string &name) {
+    char first_letter = retainFirstLetter(name);
+    std::string encoded_name = getSoundexCode(name);
+    
+    if(encoded_name.empty()) {
+        return finalizeSoundex(first_letter, encoded_name);
+    }
+    
+    encoded_name = removeConsecutiveDuplicates(encoded_name);
+    return finalizeSoundex(first_letter, encoded_name);
+}
+
+std::string generateSoundex(const std::string &name) {
     if (name.empty()) return "";
-    std::string soundex = accumulateSoundexCodes(name);
-    return padSoundex(soundex);
+    
+    return getSoundex(name);
 }
-
-
